@@ -32,13 +32,15 @@ public class PropagationService {
 
         initFramesIfNeeded();
 
-        Vector3D position = state.getPVCoordinates(itrf).getPosition();
-        GeodeticPoint geodetic = earth.transform(position, itrf, date);
+        var pv = state.getPVCoordinates(itrf);
+        GeodeticPoint geodetic = earth.transform(pv.getPosition(), itrf, date);
+        Instant tleEpoch = tle.getDate().toDate(TimeScalesFactory.getUTC()).toInstant();
 
         return new Position(
                 FastMath.toDegrees(geodetic.getLatitude()),
                 FastMath.toDegrees(geodetic.getLongitude()),
-                geodetic.getAltitude() / 1000.0
+                geodetic.getAltitude() / 1000.0,
+                pv.getVelocity().getNorm() / 1000.0, tleEpoch
         );
 
     }
