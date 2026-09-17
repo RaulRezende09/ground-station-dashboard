@@ -7,6 +7,10 @@ target/
 ### Orekit ###
 orekit-data/
 
+### Python ###
+.venv/
+__pycache__/
+
 ### STS ###
 .apt_generated
 .classpath

@@ -43,7 +43,11 @@ Orekit handles the full transformation chain between them.
 
 ## Validation
 
-Every propagation is cross-checked against an independent implementation (`python-sgp4`) rather than trusted on faith. Measured deviation will be documented here once v0.1 is deployed.
+Propagation is cross-validated against [`python-sgp4`](https://pypi.org/project/sgp4/), an independent SGP4 implementation.
+
+For ISS (ZARYA), NORAD 25544, propagated to `2026-09-19T12:00:00Z`: **0.7245617773954982 m** deviation in the TEME frame.
+
+Reference script: `tools/reference.py`. Comparison test: `PropagationValidationTest`.
 
 ## Data sources & attribution
 
