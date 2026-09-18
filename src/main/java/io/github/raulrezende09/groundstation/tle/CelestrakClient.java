@@ -13,8 +13,8 @@ public class CelestrakClient {
 
     private static final Logger log = LoggerFactory.getLogger(CelestrakClient.class);
 
-    private static final String URL =
-            "https://celestrak.org/NORAD/elements/gp.php?CATNR={id}&FORMAT=TLE";
+    private static final String MIRROR_URL =
+            "https://raw.githubusercontent.com/RaulRezende09/ground-station-dashboard/main/data/tle-mirror.txt";
 
     private final RestClient http = RestClient.builder()
             .defaultHeader("User-Agent",
@@ -25,13 +25,13 @@ public class CelestrakClient {
     public TleLines fetch(int noradId) {
         String body;
         try {
-            body = http.get().uri(URL, noradId).retrieve().body(String.class);
+            body = http.get().uri(MIRROR_URL).retrieve().body(String.class);
         } catch (HttpClientErrorException e) {
-            log.warn("Celestrak returned a client error for NORAD ID {}: {}", noradId, e.getMessage());
+            log.warn("TLE mirror returned a client error: {}", e.getMessage());
             throw new SatelliteNotFoundException(noradId);
         } catch (RestClientException e) {
-            log.error("Failed to reach Celestrak for NORAD ID {}", noradId, e);
-            throw new CelestrakUnavailableException("Celestrak is currently unavailable", e);
+            log.error("Failed to reach the TLE mirror on GitHub", e);
+            throw new CelestrakUnavailableException("TLE mirror is currently unavailable", e);
         }
 
         if (body == null || body.isBlank()) {
@@ -39,10 +39,18 @@ public class CelestrakClient {
         }
 
         String[] lines = body.strip().split("\\R");
-        if (lines.length < 3) {
-            throw new SatelliteNotFoundException(noradId);
+
+        for (int i = 0; i + 2 < lines.length; i += 3) {
+            String name = lines[i].strip();
+            String line1 = lines[i + 1];
+            String line2 = lines[i + 2];
+
+            int catalogNumber = Integer.parseInt(line1.substring(2, 7).trim());
+            if (catalogNumber == noradId) {
+                return new TleLines(name, line1, line2);
+            }
         }
 
-        return new TleLines(lines[0].strip(), lines[1], lines[2]);
+        throw new SatelliteNotFoundException(noradId);
     }
 }
