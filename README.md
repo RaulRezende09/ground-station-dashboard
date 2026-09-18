@@ -1,4 +1,4 @@
-# Ground Station Dashboard
+# Ground Station Dashboard by Raul Rezende
 
 > 🚧 **Work in progress.** Building this in 4 incremental releases (Sep–Dec 2026), each one deployed before the next one starts. See [Roadmap](#roadmap) below for current status.
 
