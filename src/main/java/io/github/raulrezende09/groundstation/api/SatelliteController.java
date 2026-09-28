@@ -1,5 +1,6 @@
 package io.github.raulrezende09.groundstation.api;
 
+import io.github.raulrezende09.groundstation.api.dto.*;
 import io.github.raulrezende09.groundstation.propagation.*;
 import io.github.raulrezende09.groundstation.tle.CelestrakClient;
 import io.github.raulrezende09.groundstation.tle.TleLines;

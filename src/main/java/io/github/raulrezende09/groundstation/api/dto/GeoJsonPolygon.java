@@ -1,4 +1,4 @@
-package io.github.raulrezende09.groundstation.api;
+package io.github.raulrezende09.groundstation.api.dto;
 
 import io.github.raulrezende09.groundstation.propagation.TrackPoint;
 

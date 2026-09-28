@@ -1,4 +1,4 @@
-package io.github.raulrezende09.groundstation.api;
+package io.github.raulrezende09.groundstation.api.dto;
 
 import java.time.Instant;
 
