@@ -2,6 +2,8 @@ package io.github.raulrezende09.groundstation.api;
 
 import io.github.raulrezende09.groundstation.propagation.Position;
 import io.github.raulrezende09.groundstation.propagation.PropagationService;
+import io.github.raulrezende09.groundstation.propagation.TrackPoint;
+import io.github.raulrezende09.groundstation.propagation.TrackSegmenter;
 import io.github.raulrezende09.groundstation.tle.CelestrakClient;
 import io.github.raulrezende09.groundstation.tle.TleLines;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/satellites")
@@ -52,8 +55,10 @@ public class SatelliteController {
             @RequestParam(defaultValue = "30") int stepSeconds) {
 
         TleLines tle = celestrakClient.fetch(noradId);
-        var points = propagationService.groundTrack(tle, Instant.now(), spanSeconds, stepSeconds);
+        List<TrackPoint> points = propagationService.groundTrack(tle, Instant.now(), spanSeconds, stepSeconds);
+        List<List<TrackPoint>> segments = TrackSegmenter.splitAtAntimeridian(points);
+        GeoJsonMultiLineString track = GeoJsonMultiLineString.of(segments);
 
-        return new GroundTrackDto(noradId, tle.name(), points);
+        return new GroundTrackDto(noradId, tle.name(), track);
     }
 }
