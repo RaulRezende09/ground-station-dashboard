@@ -44,4 +44,16 @@ public class SatelliteController {
                 position.tleEpoch()
         );
     }
+
+    @GetMapping("/{noradId}/groundtrack")
+    public GroundTrackDto GroundTrack(
+            @PathVariable int noradId,
+            @RequestParam(defaultValue = "3600") int spanSeconds,
+            @RequestParam(defaultValue = "30") int stepSeconds) {
+
+        TleLines tle = celestrakClient.fetch(noradId);
+        var points = propagationService.groundTrack(tle, Instant.now(), spanSeconds, stepSeconds);
+
+        return new GroundTrackDto(noradId, tle.name(), points);
+    }
 }
