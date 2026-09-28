@@ -28,7 +28,7 @@ class PropagationServiceTest {
         System.out.println(position);
 
         assertThat(position.latitudeDeg()).isBetween(-90.0, 90.0);
-        assertThat(position.LongitudeDeg()).isBetween(-180.0, 180.0);
+        assertThat(position.longitudeDeg()).isBetween(-180.0, 180.0);
         assertThat(position.altitudeKm()).isBetween(300.0, 500.0); // órbita típica da ISS
     }
 }

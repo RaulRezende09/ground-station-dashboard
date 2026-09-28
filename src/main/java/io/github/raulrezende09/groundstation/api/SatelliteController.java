@@ -4,6 +4,7 @@ import io.github.raulrezende09.groundstation.api.dto.*;
 import io.github.raulrezende09.groundstation.propagation.*;
 import io.github.raulrezende09.groundstation.tle.CelestrakClient;
 import io.github.raulrezende09.groundstation.tle.TleLines;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/satellites")
@@ -23,6 +25,14 @@ public class SatelliteController {
     public SatelliteController(CelestrakClient celestrakClient, PropagationService propagationService) {
         this.celestrakClient = celestrakClient;
         this.propagationService = propagationService;
+    }
+
+    @GetMapping("/**")
+    public ResponseEntity<Map<String, String>> handleMalformedSatelliteUrl() {
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "Unrecognized satellite endpoint, or a NORAD ID is missing/invalid in the URL",
+                "examples", "/api/satellites/25544/position, /api/satellites/25544/groundtrack, /api/satellites/25544/footprint"
+        ));
     }
 
     @GetMapping("/{noradId}/position")
@@ -39,7 +49,7 @@ public class SatelliteController {
                 tle.name(),
                 instant,
                 position.latitudeDeg(),
-                position.LongitudeDeg(),
+                position.longitudeDeg(),
                 position.altitudeKm(),
                 position.velocityKmS(),
                 position.tleEpoch()
@@ -47,7 +57,7 @@ public class SatelliteController {
     }
 
     @GetMapping("/{noradId}/groundtrack")
-    public GroundTrackDto GroundTrack(
+    public GroundTrackDto groundTrack(
             @PathVariable int noradId,
             @RequestParam(defaultValue = "3600") int spanSeconds,
             @RequestParam(defaultValue = "30") int stepSeconds) {
@@ -70,7 +80,7 @@ public class SatelliteController {
 
         double radiusKm = Footprint.radiusKm(position.altitudeKm(), minElevationDeg);
         List<TrackPoint> ring = Footprint.ring(
-                position.latitudeDeg(), position.LongitudeDeg(),
+                position.latitudeDeg(), position.longitudeDeg(),
                 position.altitudeKm(), minElevationDeg);
         GeoJsonPolygon footprint = GeoJsonPolygon.of(ring);
 
