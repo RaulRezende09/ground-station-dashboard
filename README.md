@@ -5,7 +5,7 @@
 **Live demo:** the API is live at `https://ground-station-dashboard-9tc8.onrender.com`. Try it:
 - Current position: [`/api/satellites/25544/position`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/position)
 - Ground track: [`/api/satellites/25544/groundtrack`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/groundtrack)
-- Visibility footprint: [`/api/satellites/25544/footprint?minElevationDeg=10`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/footprint?minElevationDeg=10)
+- Visibility footprint: [`/api/satellites/25544/footprint`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/footprint?minElevationDeg=10)
 
 *(the service is on Render's free tier and sleeps after inactivity — the first request after a while can take a few seconds to wake it up)*
 
