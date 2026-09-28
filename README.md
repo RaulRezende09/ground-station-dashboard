@@ -2,7 +2,13 @@
 
 > 🚧 **Work in progress.** Building this in 4 incremental releases (Sep–Dec 2026), each one deployed before the next one starts. See [Roadmap](#roadmap) below for current status.
 
-**Live demo:** https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/position
+**Live demo:** the API is live at `https://ground-station-dashboard-9tc8.onrender.com`. Try it:
+- Current position: [`/api/satellites/25544/position`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/position)
+- Ground track: [`/api/satellites/25544/groundtrack`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/groundtrack)
+- Visibility footprint: [`/api/satellites/25544/footprint?minElevationDeg=10`](https://ground-station-dashboard-9tc8.onrender.com/api/satellites/25544/footprint?minElevationDeg=10)
+
+*(the service is on Render's free tier and sleeps after inactivity — the first request after a while can take a few seconds to wake it up)*
+
 ![CI](https://github.com/RaulRezende09/ground-station-dashboard/actions/workflows/ci.yml/badge.svg)
 
 A satellite tracking system built from scratch: given a satellite's orbital data (TLE), it computes where the satellite is right now, predicts upcoming passes over a ground station, and — by the final release — visualizes the Doppler shift of its radio signal.
