@@ -17,6 +17,8 @@ import org.orekit.utils.IERSConventions;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class PropagationService {
@@ -24,8 +26,7 @@ public class PropagationService {
     private OneAxisEllipsoid earth;
 
     public Position positionAt(TleLines tleLines, Instant instant) {
-        TLE tle = new TLE(tleLines.line1(), tleLines.line2());
-        TLEPropagator propagator = TLEPropagator.selectExtrapolator(tle);
+        TLEPropagator propagator = propagatorFor(tleLines);
 
         AbsoluteDate date = new AbsoluteDate(instant, TimeScalesFactory.getUTC());
         SpacecraftState state = propagator.propagate(date);
@@ -34,7 +35,7 @@ public class PropagationService {
 
         var pv = state.getPVCoordinates(itrf);
         GeodeticPoint geodetic = earth.transform(pv.getPosition(), itrf, date);
-        Instant tleEpoch = tle.getDate().toDate(TimeScalesFactory.getUTC()).toInstant();
+        Instant tleEpoch = propagator.getTLE().getDate().toDate(TimeScalesFactory.getUTC()).toInstant();
 
         return new Position(
                 FastMath.toDegrees(geodetic.getLatitude()),
@@ -45,6 +46,32 @@ public class PropagationService {
 
     }
 
+    public List<TrackPoint> groundTrack(TleLines tleLines, Instant center, int spanSeconds, int stepSeconds){
+        TLEPropagator propagator = propagatorFor(tleLines);
+        initFramesIfNeeded();
+
+        AbsoluteDate centerDate = new AbsoluteDate(center, TimeScalesFactory.getUTC());
+        List<TrackPoint> points = new ArrayList<>();
+
+        for (int t = -spanSeconds/2; t <= spanSeconds/2; t+= stepSeconds) {
+            AbsoluteDate date = centerDate.shiftedBy((double) t);
+            SpacecraftState state = propagator.propagate(date);
+
+            Vector3D position = state.getPVCoordinates(itrf).getPosition();
+            GeodeticPoint geodetic = earth.transform(position, itrf, date);
+
+            points.add(new TrackPoint(
+                    FastMath.toDegrees(geodetic.getLatitude()),
+                    FastMath.toDegrees(geodetic.getLongitude())
+            ));
+        }
+        return points;
+    }
+
+    private TLEPropagator propagatorFor(TleLines tleLines) {
+        TLE tle = new TLE(tleLines.line1(), tleLines.line2());
+        return TLEPropagator.selectExtrapolator(tle);
+    }
     private synchronized void initFramesIfNeeded() {
         if (itrf == null) {
             itrf = FramesFactory.getITRF(IERSConventions.IERS_2010, true);
