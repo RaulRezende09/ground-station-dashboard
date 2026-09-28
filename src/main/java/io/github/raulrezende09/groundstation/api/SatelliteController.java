@@ -1,9 +1,6 @@
 package io.github.raulrezende09.groundstation.api;
 
-import io.github.raulrezende09.groundstation.propagation.Position;
-import io.github.raulrezende09.groundstation.propagation.PropagationService;
-import io.github.raulrezende09.groundstation.propagation.TrackPoint;
-import io.github.raulrezende09.groundstation.propagation.TrackSegmenter;
+import io.github.raulrezende09.groundstation.propagation.*;
 import io.github.raulrezende09.groundstation.tle.CelestrakClient;
 import io.github.raulrezende09.groundstation.tle.TleLines;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,5 +57,22 @@ public class SatelliteController {
         GeoJsonMultiLineString track = GeoJsonMultiLineString.of(segments);
 
         return new GroundTrackDto(noradId, tle.name(), track);
+    }
+
+    @GetMapping("/{noradId}/footprint")
+    public FootprintDto footprint(
+            @PathVariable int noradId,
+            @RequestParam(defaultValue = "10") double minElevationDeg) {
+
+        TleLines tle = celestrakClient.fetch(noradId);
+        Position position = propagationService.positionAt(tle, Instant.now());
+
+        double radiusKm = Footprint.radiusKm(position.altitudeKm(), minElevationDeg);
+        List<TrackPoint> ring = Footprint.ring(
+                position.latitudeDeg(), position.LongitudeDeg(),
+                position.altitudeKm(), minElevationDeg);
+        GeoJsonPolygon footprint = GeoJsonPolygon.of(ring);
+
+        return new FootprintDto(noradId, tle.name(), radiusKm, minElevationDeg, footprint);
     }
 }
