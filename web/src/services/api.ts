@@ -2,7 +2,7 @@ import type {
     FootprintResponse,
     GroundTrackResponse,
     PositionResponse,
-} from './types'
+} from '../types.ts'
 
 async function getJson<T>(path: string): Promise<T> {
     const response = await fetch(path)

@@ -1,4 +1,4 @@
-import { SATELLITES } from '../satellites'
+import { SATELLITES } from '../data/satellites.ts'
 
 interface SatelliteSelectorProps {
     selected: number

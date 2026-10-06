@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SatelliteMap } from './components/SatelliteMap'
 import { SatelliteSelector } from './components/SatelliteSelector'
-import { SATELLITES } from './satellites'
+import { SATELLITES } from './data/satellites.ts'
 
 function App() {
   const [noradId, setNoradId] = useState(SATELLITES[0].noradId)

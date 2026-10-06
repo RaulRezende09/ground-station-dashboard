@@ -7,15 +7,15 @@ import {
     fetchFootprint,
     fetchGroundTrack,
     fetchPosition,
-} from '../api'
+} from '../services/api.ts'
 import {
     type Coordinate,
     flattenTrack,
     locateOnTrack,
     positionAt,
-} from '../interpolation'
+} from '../lib/interpolation.ts'
 import type { PositionResponse } from '../types'
-import { footprintOutline } from '../footprint'
+import { footprintOutline } from '../lib/footprint.ts'
 import maplibreglWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
 maplibregl.setWorkerUrl(maplibreglWorkerUrl)

@@ -1,5 +1,5 @@
 import type { Geometry } from 'geojson'
-import type { FootprintResponse } from './types'
+import type { FootprintResponse } from '../types.ts'
 
 // The backend closes footprints that enclose a pole by adding vertices at
 // latitude +/-90. They only exist to fill the polygon correctly, so the visible
