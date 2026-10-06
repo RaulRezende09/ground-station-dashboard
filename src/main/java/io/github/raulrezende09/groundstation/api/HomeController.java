@@ -9,7 +9,7 @@ import java.util.Map;
 @RestController
 public class HomeController {
 
-    @GetMapping("/")
+    @GetMapping("/api")
     public Map<String, Object> home() {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("name", "Ground Station Dashboard");
