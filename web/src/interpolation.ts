@@ -15,9 +15,14 @@ function wrapLongitude(lon: number): number {
     return lon
 }
 
-// Joins the antimeridian segments back into a single ordered list of points.
+// Joins the antimeridian segments back into a single ordered list of points,
+// dropping the synthetic edge points (lon = ±180) that the backend adds only
+// to close the visual gap: they are not 30-second samples.
 export function flattenTrack(segments: number[][][]): Coordinate[] {
-    return segments.flat().map(([lon, lat]): Coordinate => [lon, lat])
+    return segments
+        .flat()
+        .filter(([lon]) => Math.abs(lon) !== 180)
+        .map(([lon, lat]): Coordinate => [lon, lat])
 }
 
 // Returns a fractional index on the track: 60.4 means "40% of the way from
