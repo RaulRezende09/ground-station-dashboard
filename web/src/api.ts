@@ -25,8 +25,13 @@ export function fetchPosition(noradId: number) {
     return getJson<PositionResponse>(`/api/satellites/${noradId}/position`)
 }
 
+export const TRACK_SPAN_SECONDS = 3600
+export const TRACK_STEP_SECONDS = 30
+
 export function fetchGroundTrack(noradId: number) {
-    return getJson<GroundTrackResponse>(`/api/satellites/${noradId}/groundtrack`)
+    return getJson<GroundTrackResponse>(
+        `/api/satellites/${noradId}/groundtrack?spanSeconds=${TRACK_SPAN_SECONDS}&stepSeconds=${TRACK_STEP_SECONDS}`,
+    )
 }
 
 export function fetchFootprint(noradId: number, minElevationDeg = 10) {

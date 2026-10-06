@@ -1,20 +1,49 @@
 import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { fetchFootprint, fetchGroundTrack, fetchPosition } from '../api'
+import type { Geometry } from 'geojson'
+import {
+    TRACK_STEP_SECONDS,
+    fetchFootprint,
+    fetchGroundTrack,
+    fetchPosition,
+} from '../api'
+import {
+    type Coordinate,
+    flattenTrack,
+    locateOnTrack,
+    positionAt,
+} from '../interpolation'
 import type { PositionResponse } from '../types'
 
 const EMPTY_COLLECTION = { type: 'FeatureCollection' as const, features: [] }
+
+const TICK_MS = 1_000
+const FOOTPRINT_REFRESH_MS = 10_000
+const TRACK_REFRESH_MS = 5 * 60_000
 
 interface SatelliteMapProps {
     noradId: number
 }
 
+interface TimeAnchor {
+    index: number // fractional track index at the moment the response arrived
+    receivedAt: number // Date.now() at that moment
+}
+
+function updateSource(map: maplibregl.Map, id: string, geometry: Geometry) {
+    const source = map.getSource(id) as maplibregl.GeoJSONSource | undefined
+    source?.setData({ type: 'Feature', properties: {}, geometry })
+}
+
 export function SatelliteMap({ noradId }: SatelliteMapProps) {
     const mapContainer = useRef<HTMLDivElement>(null)
     const mapRef = useRef<maplibregl.Map | null>(null)
+    const trackRef = useRef<Coordinate[]>([])
+    const anchorRef = useRef<TimeAnchor | null>(null)
     const [mapReady, setMapReady] = useState(false)
     const [position, setPosition] = useState<PositionResponse | null>(null)
+    const [livePosition, setLivePosition] = useState<Coordinate | null>(null)
     const [error, setError] = useState<string | null>(null)
 
     // Effect 1: create the map once and register the three empty layers.
@@ -75,56 +104,84 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
         }
     }, [])
 
-    // Effect 2: fetch data whenever the map is ready or the satellite changes.
+    // Effect 2: data loading and the per-second animation.
     useEffect(() => {
         const map = mapRef.current
         if (!mapReady || !map) return
 
         let cancelled = false
 
-        async function load() {
+        // Forget everything from the previous satellite.
+        trackRef.current = []
+        anchorRef.current = null
+        setPosition(null)
+        setLivePosition(null)
+
+        async function loadTrackAndPosition() {
             try {
-                setError(null)
-                const [pos, track, footprint] = await Promise.all([
+                const [pos, track] = await Promise.all([
                     fetchPosition(noradId),
                     fetchGroundTrack(noradId),
-                    fetchFootprint(noradId),
                 ])
                 if (cancelled || !map) return
 
-                const footprintSource = map.getSource('footprint') as maplibregl.GeoJSONSource
-                footprintSource.setData({
-                    type: 'Feature',
-                    properties: {},
-                    geometry: footprint.footprint,
-                })
+                const points = flattenTrack(track.track.coordinates)
+                trackRef.current = points
+                anchorRef.current = {
+                    index: locateOnTrack(points, pos.longitude, pos.latitude),
+                    receivedAt: Date.now(),
+                }
 
-                const trackSource = map.getSource('track') as maplibregl.GeoJSONSource
-                trackSource.setData({
-                    type: 'Feature',
-                    properties: {},
-                    geometry: track.track,
-                })
-
-                const satelliteSource = map.getSource('satellite') as maplibregl.GeoJSONSource
-                satelliteSource.setData({
-                    type: 'Feature',
-                    properties: {},
-                    geometry: { type: 'Point', coordinates: [pos.longitude, pos.latitude] },
+                updateSource(map, 'track', track.track)
+                updateSource(map, 'satellite', {
+                    type: 'Point',
+                    coordinates: [pos.longitude, pos.latitude],
                 })
 
                 setPosition(pos)
+                setLivePosition([pos.longitude, pos.latitude])
+                setError(null)
             } catch (e) {
-                if (!cancelled) {
-                    setError(e instanceof Error ? e.message : 'Unexpected error')
-                }
+                if (!cancelled) setError(e instanceof Error ? e.message : 'Unexpected error')
             }
         }
 
-        load()
+        async function loadFootprint() {
+            try {
+                const footprint = await fetchFootprint(noradId)
+                if (cancelled || !map) return
+                updateSource(map, 'footprint', footprint.footprint)
+            } catch (e) {
+                if (!cancelled) setError(e instanceof Error ? e.message : 'Unexpected error')
+            }
+        }
+
+        // Move the marker along the track using only the clock (no network).
+        function tick() {
+            const anchor = anchorRef.current
+            if (!anchor || !map) return
+
+            const elapsedSeconds = (Date.now() - anchor.receivedAt) / 1000
+            const index = anchor.index + elapsedSeconds / TRACK_STEP_SECONDS
+            const coordinate = positionAt(trackRef.current, index)
+            if (!coordinate) return
+
+            updateSource(map, 'satellite', { type: 'Point', coordinates: coordinate })
+            setLivePosition(coordinate)
+        }
+
+        loadTrackAndPosition()
+        loadFootprint()
+
+        const trackTimer = setInterval(loadTrackAndPosition, TRACK_REFRESH_MS)
+        const footprintTimer = setInterval(loadFootprint, FOOTPRINT_REFRESH_MS)
+        const tickTimer = setInterval(tick, TICK_MS)
 
         return () => {
             cancelled = true
+            clearInterval(trackTimer)
+            clearInterval(footprintTimer)
+            clearInterval(tickTimer)
         }
     }, [mapReady, noradId])
 
@@ -132,11 +189,11 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
         <div className="relative h-screen w-screen">
             <div ref={mapContainer} className="h-full w-full" />
 
-            {position && (
+            {position && livePosition && (
                 <div className="absolute left-4 top-4 rounded bg-white/90 px-3 py-2 text-sm shadow">
                     <div className="font-semibold">{position.name}</div>
                     <div>
-                        {position.latitude.toFixed(2)}°, {position.longitude.toFixed(2)}° ·{' '}
+                        {livePosition[1].toFixed(2)}°, {livePosition[0].toFixed(2)}° ·{' '}
                         {position.altitudeKm.toFixed(0)} km
                     </div>
                 </div>
