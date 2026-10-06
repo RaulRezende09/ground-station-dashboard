@@ -15,6 +15,9 @@ import {
     positionAt,
 } from '../interpolation'
 import type { PositionResponse } from '../types'
+import maplibreglWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+
+maplibregl.setWorkerUrl(maplibreglWorkerUrl)
 
 const EMPTY_COLLECTION = { type: 'FeatureCollection' as const, features: [] }
 
