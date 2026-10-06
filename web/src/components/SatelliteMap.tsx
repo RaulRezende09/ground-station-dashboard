@@ -15,6 +15,7 @@ import {
     positionAt,
 } from '../interpolation'
 import type { PositionResponse } from '../types'
+import { footprintOutline } from '../footprint'
 import maplibreglWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
 maplibregl.setWorkerUrl(maplibreglWorkerUrl)
@@ -63,6 +64,7 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
 
         map.on('load', () => {
             map.addSource('footprint', { type: 'geojson', data: EMPTY_COLLECTION })
+            map.addSource('footprint-outline', { type: 'geojson', data: EMPTY_COLLECTION })
             map.addLayer({
                 id: 'footprint-fill',
                 type: 'fill',
@@ -72,7 +74,7 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
             map.addLayer({
                 id: 'footprint-outline',
                 type: 'line',
-                source: 'footprint',
+                source: 'footprint-outline',
                 paint: { 'line-color': '#38bdf8', 'line-width': 1.5 },
             })
 
@@ -154,6 +156,7 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
                 const footprint = await fetchFootprint(noradId)
                 if (cancelled || !map) return
                 updateSource(map, 'footprint', footprint.footprint)
+                updateSource(map, 'footprint-outline', footprintOutline(footprint.footprint))
             } catch (e) {
                 if (!cancelled) setError(e instanceof Error ? e.message : 'Unexpected error')
             }
