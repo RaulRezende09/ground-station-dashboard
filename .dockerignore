@@ -4,3 +4,6 @@ target/
 orekit-data/
 .git/
 *.md
+**/node_modules
+**/dist
+tools/
