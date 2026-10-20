@@ -15,6 +15,7 @@ import org.orekit.time.TimeScalesFactory;
 import org.orekit.utils.Constants;
 import org.orekit.utils.IERSConventions;
 import org.springframework.stereotype.Service;
+import org.orekit.frames.TopocentricFrame;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -46,6 +47,32 @@ public class PropagationService {
 
     }
 
+    public LookAngles lookAngles(TleLines tleLines, Station station, Instant instant){
+        TLEPropagator propagator = propagatorFor(tleLines);
+
+        AbsoluteDate date = new AbsoluteDate(instant, TimeScalesFactory.getUTC());
+        SpacecraftState state = propagator.propagate(date);
+
+        initFramesIfNeeded();
+        TopocentricFrame topo = topocentricFrame(station);
+
+        var pv = state.getPVCoordinates(itrf);
+        double azimuth = topo.getAzimuth(pv.getPosition(), itrf, date);
+        double elevation = topo.getElevation(pv.getPosition(), itrf, date);
+        double range = topo.getRange(pv.getPosition(), itrf, date);
+        double rangeRate = topo.getRangeRate(pv, itrf, date);
+
+        Instant tleEpoch = propagator.getTLE().getDate().toDate(TimeScalesFactory.getUTC()).toInstant();
+
+        return new LookAngles(
+                FastMath.toDegrees(azimuth),
+                FastMath.toDegrees(elevation),
+                range / 1000.0,
+                rangeRate / 1000.0,
+                tleEpoch
+        );
+    }
+
     public List<TrackPoint> groundTrack(TleLines tleLines, Instant center, int spanSeconds, int stepSeconds){
         TLEPropagator propagator = propagatorFor(tleLines);
         initFramesIfNeeded();
@@ -68,6 +95,13 @@ public class PropagationService {
         return points;
     }
 
+    private TopocentricFrame topocentricFrame(Station station) {
+        GeodeticPoint point = new GeodeticPoint(
+                FastMath.toRadians(station.latitudeDeg()),
+                FastMath.toRadians(station.longitudeDeg()),
+                station.altitudeM());
+        return new TopocentricFrame(earth, point, station.name());
+    }
     private TLEPropagator propagatorFor(TleLines tleLines) {
         TLE tle = new TLE(tleLines.line1(), tleLines.line2());
         return TLEPropagator.selectExtrapolator(tle);
