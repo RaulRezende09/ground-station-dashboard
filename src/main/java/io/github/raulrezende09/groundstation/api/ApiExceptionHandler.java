@@ -1,7 +1,7 @@
 package io.github.raulrezende09.groundstation.api;
 
-import io.github.raulrezende09.groundstation.tle.CelestrakUnavailableException;
-import io.github.raulrezende09.groundstation.tle.SatelliteNotFoundException;
+import io.github.raulrezende09.groundstation.exception.CelestrakUnavailableException;
+import io.github.raulrezende09.groundstation.exception.SatelliteNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;

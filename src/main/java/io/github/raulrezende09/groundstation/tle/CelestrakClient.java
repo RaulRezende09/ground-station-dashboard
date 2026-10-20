@@ -1,5 +1,7 @@
 package io.github.raulrezende09.groundstation.tle;
 
+import io.github.raulrezende09.groundstation.exception.CelestrakUnavailableException;
+import io.github.raulrezende09.groundstation.exception.SatelliteNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
