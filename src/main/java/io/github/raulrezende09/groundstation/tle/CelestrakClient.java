@@ -18,7 +18,7 @@ public class CelestrakClient {
 
     private final RestClient http = RestClient.builder()
             .defaultHeader("User-Agent",
-                    "ground-station-dashboard/0.1 (github.com/RaulRezende09/ground-station-dashboard)")
+                    "ground-station-dashboard/0.2.0 (github.com/RaulRezende09/ground-station-dashboard)")
             .build();
 
     @Cacheable("gp")
