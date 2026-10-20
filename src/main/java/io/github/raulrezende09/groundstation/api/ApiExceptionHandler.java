@@ -1,7 +1,6 @@
 package io.github.raulrezende09.groundstation.api;
 
-import io.github.raulrezende09.groundstation.exception.CelestrakUnavailableException;
-import io.github.raulrezende09.groundstation.exception.SatelliteNotFoundException;
+import io.github.raulrezende09.groundstation.exception.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -39,5 +38,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 : "The request could not be processed";
 
         return new ResponseEntity<>(Map.of("error", detail), headers, statusCode);
+    }
+
+    @ExceptionHandler(InvalidStationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleInvalidStation(InvalidStationException e) {
+        return Map.of("error", e.getMessage());
     }
 }

@@ -86,4 +86,33 @@ public class SatelliteController {
 
         return new FootprintDto(noradId, tle.name(), radiusKm, minElevationDeg, footprint);
     }
+
+    @GetMapping("/{noradId}/look")
+    public LookAnglesDto look(
+            @PathVariable int noradId,
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "0") double altM,
+            @RequestParam(defaultValue = "Station") String name,
+            @RequestParam(required = false) Instant at) {
+
+        Instant instant = at != null ? at : Instant.now();
+        Station station = new Station(name, lat, lon, altM);
+
+        TleLines tle = celestrakClient.fetch(noradId);
+        LookAngles look = propagationService.lookAngles(tle, station, instant);
+
+        return new LookAnglesDto(
+                noradId,
+                tle.name(),
+                instant,
+                station,
+                look.azimuthDeg(),
+                look.elevationDeg(),
+                look.rangeKm(),
+                look.rangeRateKmS(),
+                look.elevationDeg() >= 0.0,
+                look.tleEpoch()
+        );
+    }
 }
