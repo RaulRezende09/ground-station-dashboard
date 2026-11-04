@@ -1,4 +1,10 @@
 package io.github.raulrezende09.groundstation.propagation;
 
-public record SkyPoint() {
+import java.time.Instant;
+
+public record SkyPoint(
+        Instant time,
+        double azimuthDeg,
+        double elevationDeg
+) {
 }
