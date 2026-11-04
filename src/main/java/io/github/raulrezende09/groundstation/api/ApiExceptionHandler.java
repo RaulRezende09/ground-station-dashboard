@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import io.github.raulrezende09.groundstation.exception.InvalidPassRequestException;
 
 import java.util.Map;
 
@@ -43,6 +44,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(InvalidStationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleInvalidStation(InvalidStationException e) {
+        return Map.of("error", e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidPassRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleInvalidPassRequest(InvalidPassRequestException e) {
         return Map.of("error", e.getMessage());
     }
 }

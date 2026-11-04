@@ -21,10 +21,12 @@ public class SatelliteController {
 
     private final CelestrakClient celestrakClient;
     private final PropagationService propagationService;
+    private final PassPredictionService passPredictionService;
 
-    public SatelliteController(CelestrakClient celestrakClient, PropagationService propagationService) {
+    public SatelliteController(CelestrakClient celestrakClient, PropagationService propagationService, PassPredictionService passPredictionService) {
         this.celestrakClient = celestrakClient;
         this.propagationService = propagationService;
+        this.passPredictionService = passPredictionService;
     }
 
     @GetMapping("/**")
@@ -113,6 +115,36 @@ public class SatelliteController {
                 look.rangeRateKmS(),
                 look.elevationDeg() >= 0.0,
                 look.tleEpoch()
+        );
+    }
+
+    @GetMapping("/{noradId}/passes")
+    public PassesDto passes(
+            @PathVariable int noradId,
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "0") double altM,
+            @RequestParam(defaultValue = "Station") String name,
+            @RequestParam(defaultValue = "10") double minElevationDeg,
+            @RequestParam(defaultValue = "48") int hours,
+            @RequestParam(required = false) Instant from) {
+
+        Instant start = from != null ? from : Instant.now();
+        Instant end = start.plusSeconds(hours * 3600L);
+        Station station = new Station(name, lat, lon, altM);
+
+        TleLines tle = celestrakClient.fetch(noradId);
+        List<Pass> passes = passPredictionService.predict(tle, station, start, end, minElevationDeg);
+
+        return new PassesDto(
+                noradId,
+                tle.name(),
+                station,
+                minElevationDeg,
+                start,
+                end,
+                propagationService.tleEpoch(tle),
+                passes
         );
     }
 }
