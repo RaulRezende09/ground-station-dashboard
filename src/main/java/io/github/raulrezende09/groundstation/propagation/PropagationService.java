@@ -73,6 +73,11 @@ public class PropagationService {
         );
     }
 
+    public Instant tleEpoch(TleLines tleLines) {
+        return propagatorFor(tleLines).getTLE().getDate()
+                .toDate(TimeScalesFactory.getUTC()).toInstant();
+    }
+
     public List<TrackPoint> groundTrack(TleLines tleLines, Instant center, int spanSeconds, int stepSeconds){
         TLEPropagator propagator = propagatorFor(tleLines);
         initFramesIfNeeded();
@@ -95,14 +100,15 @@ public class PropagationService {
         return points;
     }
 
-    private TopocentricFrame topocentricFrame(Station station) {
+    TopocentricFrame topocentricFrame(Station station) {
+        initFramesIfNeeded();
         GeodeticPoint point = new GeodeticPoint(
                 FastMath.toRadians(station.latitudeDeg()),
                 FastMath.toRadians(station.longitudeDeg()),
                 station.altitudeM());
         return new TopocentricFrame(earth, point, station.name());
     }
-    private TLEPropagator propagatorFor(TleLines tleLines) {
+    TLEPropagator propagatorFor(TleLines tleLines) {
         TLE tle = new TLE(tleLines.line1(), tleLines.line2());
         return TLEPropagator.selectExtrapolator(tle);
     }
