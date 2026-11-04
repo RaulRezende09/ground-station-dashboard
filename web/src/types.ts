@@ -28,3 +28,38 @@ export interface FootprintResponse {
         coordinates: number[][][]
     }
 }
+
+export interface Station {
+    name: string
+    latitudeDeg: number
+    longitudeDeg: number
+    altitudeM: number
+}
+
+export interface SkyPoint {
+    time: string
+    azimuthDeg: number
+    elevationDeg: number
+}
+
+export interface SatellitePass {
+    aos: string
+    los: string
+    durationSeconds: number
+    maxElevationDeg: number
+    maxElevationTime: string
+    aosAzimuthDeg: number
+    losAzimuthDeg: number
+    track: SkyPoint[]
+}
+
+export interface PassesResponse {
+    noradId: number
+    name: string
+    station: Station
+    minElevationDeg: number
+    from: string
+    to: string
+    tleEpoch: string
+    passes: SatellitePass[]
+}

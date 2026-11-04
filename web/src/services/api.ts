@@ -2,6 +2,8 @@ import type {
     FootprintResponse,
     GroundTrackResponse,
     PositionResponse,
+    PassesResponse,
+    Station,
 } from '../types.ts'
 
 async function getJson<T>(path: string): Promise<T> {
@@ -38,4 +40,18 @@ export function fetchFootprint(noradId: number, minElevationDeg = 10) {
     return getJson<FootprintResponse>(
         `/api/satellites/${noradId}/footprint?minElevationDeg=${minElevationDeg}`,
     )
+}
+
+export const PASSES_WINDOW_HOURS = 48
+
+export function fetchPasses(noradId: number, station: Station, minElevationDeg: number) {
+    const params = new URLSearchParams({
+        lat: String(station.latitudeDeg),
+        lon: String(station.longitudeDeg),
+        altM: String(station.altitudeM),
+        name: station.name,
+        minElevationDeg: String(minElevationDeg),
+        hours: String(PASSES_WINDOW_HOURS),
+    })
+    return getJson<PassesResponse>(`/api/satellites/${noradId}/passes?${params}`)
 }
