@@ -29,3 +29,13 @@ export function formatDuration(seconds: number): string {
     const rest = total % 60
     return `${minutes} min ${String(rest).padStart(2, '0')} s`
 }
+
+export function formatCountdown(milliseconds: number): string {
+    const totalSeconds = Math.max(0, Math.round(milliseconds / 1000))
+    if (totalSeconds < 60) return `${totalSeconds} s`
+
+    const totalMinutes = Math.round(totalSeconds / 60)
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    return hours > 0 ? `${hours} h ${String(minutes).padStart(2, '0')} min` : `${minutes} min`
+}

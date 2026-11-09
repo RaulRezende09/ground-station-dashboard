@@ -1,7 +1,9 @@
+import { useNow } from '../hooks/useNow.ts'
 import { elevationColor, elevationGradient } from '../lib/elevationColor.ts'
+import { interpolateTrack } from '../lib/interpolateTrack.ts'
 import { polarToXY } from '../lib/polar.ts'
 import { compassPoint } from '../lib/compass.ts'
-import { formatDuration, formatLocal, formatUtc } from '../lib/time.ts'
+import { formatCountdown, formatDuration, formatLocal, formatUtc } from '../lib/time.ts'
 import type { SatellitePass } from '../types.ts'
 
 interface PolarPlotProps {
@@ -25,6 +27,8 @@ function ringRadius(elevationDeg: number): number {
 }
 
 export function PolarPlot({ pass }: PolarPlotProps) {
+    const now = useNow()
+
     const points = pass
         ? pass.track.map((p) => ({
             ...polarToXY(p.azimuthDeg, p.elevationDeg, RADIUS, CENTER, CENTER),
@@ -37,6 +41,21 @@ export function PolarPlot({ pass }: PolarPlotProps) {
     let peak = points[0]
     for (const point of points) {
         if (point.source.elevationDeg > peak.source.elevationDeg) peak = point
+    }
+
+    const live = pass ? interpolateTrack(pass.track, now) : null
+    const livePoint = live
+        ? polarToXY(live.azimuthDeg, live.elevationDeg, RADIUS, CENTER, CENTER)
+        : null
+
+    let status = ''
+    if (pass) {
+        const aosMs = Date.parse(pass.aos)
+        const losMs = Date.parse(pass.los)
+        if (now < aosMs) status = `Starts in ${formatCountdown(aosMs - now)}`
+        else if (now > losMs) status = 'This pass has already ended'
+        else if (live)
+            status = `In progress · az ${live.azimuthDeg.toFixed(0)}° · el ${live.elevationDeg.toFixed(0)}°`
     }
 
     return (
@@ -119,6 +138,24 @@ export function PolarPlot({ pass }: PolarPlotProps) {
                         <circle cx={last.x} cy={last.y} r={4} className="fill-red-500 stroke-white" />
                         <circle cx={peak.x} cy={peak.y} r={4} className="fill-amber-400 stroke-white" />
 
+                        {livePoint && (
+                            <>
+                                <circle
+                                    cx={livePoint.x}
+                                    cy={livePoint.y}
+                                    r={7}
+                                    className="origin-center animate-ping fill-sky-500/40 motion-reduce:animate-none [transform-box:fill-box]"
+                                />
+                                <circle
+                                    cx={livePoint.x}
+                                    cy={livePoint.y}
+                                    r={4}
+                                    className="fill-white stroke-slate-900"
+                                    strokeWidth={2}
+                                />
+                            </>
+                        )}
+
                         <text x={first.x + 6} y={first.y - 6} className="fill-emerald-700 text-[9px] font-semibold">
                             AOS
                         </text>
@@ -150,6 +187,7 @@ export function PolarPlot({ pass }: PolarPlotProps) {
                         max {pass.maxElevationDeg.toFixed(1)}° · {compassPoint(pass.aosAzimuthDeg)} →{' '}
                         {compassPoint(pass.losAzimuthDeg)}
                     </div>
+                    <div className="font-medium text-sky-700">{status}</div>
                 </div>
             ) : (
                 <p className="text-xs text-slate-500">Select a pass to see its path across the sky.</p>
