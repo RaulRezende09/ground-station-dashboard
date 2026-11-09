@@ -3,6 +3,7 @@ import { PassList } from './components/PassList'
 import { SatelliteMap } from './components/SatelliteMap'
 import { SatelliteSelector } from './components/SatelliteSelector'
 import { StationForm } from './components/StationForm'
+import { PolarPlot } from './components/PolarPlot'
 import { DEFAULT_MIN_ELEVATION_DEG, DEFAULT_STATION } from './data/stations.ts'
 import { SATELLITES } from './data/satellites.ts'
 import { usePasses } from './hooks/usePasses.ts'
@@ -15,6 +16,11 @@ function App() {
     const [selectedAos, setSelectedAos] = useState<string | null>(null)
 
     const { data, loading, error } = usePasses(noradId, station, minElevationDeg)
+
+    // The clicked pass if it is still in the list; otherwise the first pass.
+    const passes = data?.passes ?? null
+    const selectedPass =
+        passes?.find((pass) => pass.aos === selectedAos) ?? passes?.[0] ?? null
 
     function handleApply(newStation: Station, newMinElevation: number) {
         setStation(newStation)
@@ -35,13 +41,18 @@ function App() {
                 />
                 <h2 className="text-sm font-semibold text-slate-800">Next passes</h2>
                 <PassList
-                    passes={data?.passes ?? null}
+                    passes={passes}
                     loading={loading}
                     error={error}
-                    selectedAos={selectedAos}
+                    selectedAos={selectedPass?.aos ?? null}
                     onSelect={setSelectedAos}
                 />
             </aside>
+
+            <section className="absolute bottom-8 right-4 w-72 max-w-[calc(100vw-2rem)] rounded bg-white/95 p-3 shadow">
+                <h2 className="mb-2 text-sm font-semibold text-slate-800">Sky view</h2>
+                <PolarPlot pass={selectedPass} />
+            </section>
         </div>
     )
 }
