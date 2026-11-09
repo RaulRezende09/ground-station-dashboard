@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { PositionResponse, Station } from '../types'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Geometry } from 'geojson'
@@ -14,7 +15,6 @@ import {
     locateOnTrack,
     positionAt,
 } from '../lib/interpolation.ts'
-import type { PositionResponse } from '../types'
 import { footprintOutline } from '../lib/footprint.ts'
 import maplibreglWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
@@ -28,6 +28,7 @@ const TRACK_REFRESH_MS = 5 * 60_000
 
 interface SatelliteMapProps {
     noradId: number
+    station: Station
 }
 
 interface TimeAnchor {
@@ -40,11 +41,12 @@ function updateSource(map: maplibregl.Map, id: string, geometry: Geometry) {
     source?.setData({ type: 'Feature', properties: {}, geometry })
 }
 
-export function SatelliteMap({ noradId }: SatelliteMapProps) {
+export function SatelliteMap({ noradId, station }: SatelliteMapProps) {
     const mapContainer = useRef<HTMLDivElement>(null)
     const mapRef = useRef<maplibregl.Map | null>(null)
     const trackRef = useRef<Coordinate[]>([])
     const anchorRef = useRef<TimeAnchor | null>(null)
+    const lastStationRef = useRef<string | null>(null)
     const [mapReady, setMapReady] = useState(false)
     const [position, setPosition] = useState<PositionResponse | null>(null)
     const [livePosition, setLivePosition] = useState<Coordinate | null>(null)
@@ -99,6 +101,25 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
                 },
             })
 
+            map.addSource('station', { type: 'geojson', data: EMPTY_COLLECTION })
+            map.addLayer({
+                id: 'station-halo',
+                type: 'circle',
+                source: 'station',
+                paint: { 'circle-radius': 12, 'circle-color': '#7c3aed', 'circle-opacity': 0.2 },
+            })
+            map.addLayer({
+                id: 'station-point',
+                type: 'circle',
+                source: 'station',
+                paint: {
+                    'circle-radius': 5,
+                    'circle-color': '#7c3aed',
+                    'circle-stroke-color': '#ffffff',
+                    'circle-stroke-width': 2,
+                },
+            })
+
             setMapReady(true)
         })
 
@@ -109,7 +130,23 @@ export function SatelliteMap({ noradId }: SatelliteMapProps) {
         }
     }, [])
 
-    // Effect 2: data loading and the per-second animation.
+    // Effect 2: show the ground station and fly to it when the user moves it.
+    const { latitudeDeg, longitudeDeg } = station
+    useEffect(() => {
+        const map = mapRef.current
+        if (!mapReady || !map) return
+
+        updateSource(map, 'station', { type: 'Point', coordinates: [longitudeDeg, latitudeDeg] })
+
+        // Do not move the camera on the first draw, only when the station changes.
+        const key = `${longitudeDeg},${latitudeDeg}`
+        if (lastStationRef.current !== null && lastStationRef.current !== key) {
+            map.flyTo({ center: [longitudeDeg, latitudeDeg], zoom: Math.max(map.getZoom(), 4) })
+        }
+        lastStationRef.current = key
+    }, [mapReady, latitudeDeg, longitudeDeg])
+
+    // Effect 3: data loading and the per-second animation.
     useEffect(() => {
         const map = mapRef.current
         if (!mapReady || !map) return

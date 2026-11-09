@@ -29,7 +29,7 @@ function App() {
 
     return (
         <div className="relative h-screen w-screen">
-            <SatelliteMap noradId={noradId} />
+            <SatelliteMap noradId={noradId} station={station}/>
             <SatelliteSelector selected={noradId} onSelect={setNoradId} />
 
             <aside className="absolute bottom-4 left-4 flex max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] flex-col gap-3 overflow-y-auto rounded bg-white/95 p-3 shadow">
