@@ -1,3 +1,4 @@
+import { elevationColor, elevationGradient } from '../lib/elevationColor.ts'
 import { polarToXY } from '../lib/polar.ts'
 import { compassPoint } from '../lib/compass.ts'
 import { formatDuration, formatLocal, formatUtc } from '../lib/time.ts'
@@ -8,15 +9,15 @@ interface PolarPlotProps {
 }
 
 const SIZE = 240
-const CENTER = SIZE/2
+const CENTER = SIZE / 2
 const RADIUS = 96
 
-const RINGS = [0,30,60]
+const RINGS = [0, 30, 60]
 const CARDINALS = [
-    {label: 'N', azimuth: 0},
-    {label: 'E', azimuth: 90},
-    {label: 'S', azimuth: 180},
-    {label: 'W', azimuth: 270}
+    { label: 'N', azimuth: 0 },
+    { label: 'E', azimuth: 90 },
+    { label: 'S', azimuth: 180 },
+    { label: 'W', azimuth: 270 }
 ]
 
 function ringRadius(elevationDeg: number): number {
@@ -88,12 +89,22 @@ export function PolarPlot({ pass }: PolarPlotProps) {
 
                 {pass && (
                     <>
-                        <polyline
-                            points={points.map((p) => `${p.x},${p.y}`).join(' ')}
-                            className="fill-none stroke-sky-600"
-                            strokeWidth={2}
-                            strokeLinejoin="round"
-                        />
+                        {points.slice(1).map((p, i) => {
+                            const previous = points[i]
+                            const elevation = (previous.source.elevationDeg + p.source.elevationDeg) / 2
+                            return (
+                                <line
+                                    key={p.source.time}
+                                    x1={previous.x}
+                                    y1={previous.y}
+                                    x2={p.x}
+                                    y2={p.y}
+                                    stroke={elevationColor(elevation)}
+                                    strokeWidth={3}
+                                    strokeLinecap="round"
+                                />
+                            )
+                        })}
 
                         {points.map((p) => (
                             <circle key={p.source.time} cx={p.x} cy={p.y} r={3} className="fill-transparent">
@@ -117,6 +128,17 @@ export function PolarPlot({ pass }: PolarPlotProps) {
                     </>
                 )}
             </svg>
+
+            {pass && (
+                <div>
+                    <div className="h-2 rounded" style={{ background: elevationGradient() }} />
+                    <div className="mt-0.5 flex justify-between text-[10px] text-slate-500">
+                        <span>0°</span>
+                        <span>elevation</span>
+                        <span>90°</span>
+                    </div>
+                </div>
+            )}
 
             {pass ? (
                 <div className="text-xs text-slate-600">
